@@ -1,8 +1,10 @@
 (ns app_server.core
   (:require [org.httpkit.server :refer [run-server]]
             [compojure.core :refer [routes GET]]
+            [compojure.route :as route]
             [watch.man :refer [watch!]]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [app_server.render :as render]))
 
 ;; constants
 
@@ -16,26 +18,30 @@
 
 (defn sequable-apps []
   (seq (.list (io/file apps-folder))))
- 
+
 (defn read-apps []
   (filter (fn [path] (is-dir? (str apps-folder path))) (sequable-apps)))
 
 ;; routing
 
-(defn app-to-route [app]
-  (GET (str "/" app) [:as req]
-    {:status  200
-     :headers {"Content-Type" "text/html"}
-     :body    (slurp (str apps-folder app "/index.html"))}))
+(defn app-to-route-mapper [apps]
+  (fn [app]
+    (GET (str "/" app) [:as req]
+      {:status  200
+       :headers {"Content-Type" "text/html"}
+       :body    (render/base-page (slurp (str apps-folder app "/index.html")) apps)})))
 
-(defn index-route []
+(defn index-route [apps]
   (GET "/" [:as req]
     {:status  200
      :headers {"Content-Type" "text/html"}
-     :body    "<h1>Hello world!</h1>"}))
+     :body     (render/base-page (slurp (str render/page-template-folder "/index.html")) apps)}))
 
 (defn router [apps]
-  (apply routes (conj (map app-to-route apps) (index-route))))
+  (apply routes (conj
+    (map (app-to-route-mapper apps) apps)
+    (index-route apps)
+    (route/resources "/"))))
 
 ;; server
 

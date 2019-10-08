@@ -1,0 +1,11 @@
+.main-header {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    background-color: rgb(33, 33, 33);
+    box-shadow: 3px 3px 3px 0px rgba(0, 0, 0, .2);
+}
+
+.main-header > a {
+    color: whitesmoke;
+}
